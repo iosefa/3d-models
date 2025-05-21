@@ -58,6 +58,11 @@ jobs:
           if [ -d resources ]; then
             aws s3 sync resources "s3://$S3_BUCKET/resources" --delete --no-progress
           fi
+      - name: Upload thumbnails
+        run: |
+          if [ -d thumbnails ]; then
+            aws s3 sync thumbnails "s3://$S3_BUCKET/thumbnails" --delete --no-progress
+          fi
 
       - name: Invalidate CloudFront
         run: |
