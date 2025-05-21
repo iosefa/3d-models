@@ -40,14 +40,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
-      - name: Upload site (single sync)
+      - name: Upload build artefacts
         run: |
-          aws s3 sync . "s3://$S3_BUCKET" --delete --no-progress \
-            --exclude ".git/*" \
-            --exclude "node_modules/*" \
-            --exclude "*.md" \
-            --exclude ".github/*" \
-            --exclude ".idea/*"
+          aws s3 sync build  "s3://$S3_BUCKET"        --delete --no-progress
+      - name: Upload libs
+        run: |
+          if [ -d libs ]; then
+            aws s3 sync libs "s3://$S3_BUCKET/libs"   --delete --no-progress
+          fi
+      - name: Upload models
+        run: |
+          if [ -d models ]; then
+            aws s3 sync models "s3://$S3_BUCKET/models" --delete --no-progress
+          fi
+      - name: Upload resources (shaders, textures, etc.)
+        run: |
+          if [ -d resources ]; then
+            aws s3 sync resources "s3://$S3_BUCKET/resources" --delete --no-progress
+          fi
 
       - name: Invalidate CloudFront
         run: |
