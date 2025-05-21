@@ -28,7 +28,7 @@ jobs:
       - name: Copy Potree viewer into build
         run: |
           # adjust the source path if your viewer lives elsewhere
-          cp -R potree "$BUILD_DIR"/
+          cp -R build/potree "$BUILD_DIR"/
 
       # ───────────── AWS creds ─────────────
       - uses: aws-actions/configure-aws-credentials@v4
