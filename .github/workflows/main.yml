@@ -50,6 +50,12 @@ jobs:
             aws s3 sync "$MODELS_DIR" "s3://$S3_BUCKET/models" --delete --no-progress
           fi
 
+      - name: Upload shared libs
+        run: |
+          if [ -d libs ]; then
+            aws s3 sync libs "s3://$S3_BUCKET/libs" --delete --no-progress
+          fi
+
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
