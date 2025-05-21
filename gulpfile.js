@@ -9,7 +9,7 @@ const concat = require('gulp-concat');
 const connect = require('gulp-connect');
 const {watch} = gulp;
 
-const {createExamplesPage} = require("./src/tools/create_potree_page");
+// const {createExamplesPage} = require("./src/tools/create_potree_page");
 const {createGithubPage} = require("./src/tools/create_github_page");
 const {createIconsPage} = require("./src/tools/create_icons_page");
 
@@ -86,7 +86,7 @@ gulp.task('webserver', gulp.series(async function() {
 
 gulp.task('examples_page', async function(done) {
 	await Promise.all([
-		createExamplesPage(),
+		// createExamplesPage(),
 		createGithubPage(),
 	]);
 
@@ -162,15 +162,19 @@ gulp.task("shaders", async function(){
 	fs.writeFileSync(targetPath, content, {flag: "w"});
 });
 
-gulp.task('build', 
+gulp.task('build',
 	gulp.series(
 		gulp.parallel("workers", "lazylibs", "shaders", "icons_viewer", "examples_page"),
-		async function(done){
+		async function (done) {
+
+			// copy index.html from repo root into build/potree
+			gulp.src('index.html')
+				.pipe(gulp.dest('build/potree'));
+
+			// existing copies
 			gulp.src(paths.html).pipe(gulp.dest('build/potree'));
-
 			gulp.src(paths.resources).pipe(gulp.dest('build/potree/resources'));
-
-			gulp.src(["LICENSE"]).pipe(gulp.dest('build/potree'));
+			gulp.src(['LICENSE']).pipe(gulp.dest('build/potree'));
 
 			done();
 		}

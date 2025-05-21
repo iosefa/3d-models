@@ -55,16 +55,16 @@ function toCode(files, data){
 
 		for(let example of row){
 
-			let url = example.url.startsWith("http") ? 
-				example.url : 
+			let url = example.url.startsWith("http") ?
+				example.url :
 				`http://potree.org/potree/examples/${example.url}`;
-			
+
 			thumbnails += `<td>
 					<a href="${url}" target="_blank">
 						<img src="examples/${example.thumb}" width="100%" />
 					</a>
 				</td>`;
-			
+
 			labels += `<th>${example.label}</th>`;
 		}
 
@@ -81,10 +81,10 @@ function toCode(files, data){
 
 
 async function createGithubPage(){
-	const content = await fsp.readFile("./examples/page.json", 'utf8');
+	const content = await fsp.readFile("index.json", 'utf8');
 	const settings = JSON5.parse(content);
 
-	const files = await fsp.readdir("./examples");
+	const files = await fsp.readdir("./models");
 
 	let unhandledCode = ``;
 
