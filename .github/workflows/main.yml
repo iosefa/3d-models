@@ -12,6 +12,7 @@ jobs:
       BUILD_DIR: build
       MODELS_DIR: models
       BUILD_CMD: npm run build
+      DISTRIBUTION_ID: E2XWTFZCKFMWL3
 
       AWS_REGION: us-west-1
       S3_BUCKET: 3d-sefa
