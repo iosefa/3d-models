@@ -1,35 +1,44 @@
-name: Build & Deploy to S3
+name: Deploy Potree
 
 on:
   push:
     branches: [ main ]
 
+env:
+  AWS_REGION: us-west-1
+  S3_BUCKET: 3d-sefa
+  DISTRIBUTION_ID: E2XWTFZCKFMWL3
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    env:
-      BUILD_DIR: build
-      AWS_REGION: us-west-1
-      S3_BUCKET: 3d-sefa
-      DISTRIBUTION_ID: E2XWTFZCKFMWL3
-
     steps:
-      # ───────────── repo + build ─────────────
+
+      # ────── get code ──────
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with: { node-version: 18 }
-
+      # ────── AWS creds ──────
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
-      - name: Upload entire site
+      # ────── upload everything you actually serve ──────
+      - name: Sync repo → S3 bucket root
         run: |
-          aws s3 sync . "s3://$S3_BUCKET" --delete --no-progress \
+          aws s3 sync . "s3://${S3_BUCKET}" --delete --no-progress \
             --exclude ".git/*" \
+            --exclude ".github/*" \
             --exclude "node_modules/*" \
-            --exclude ".github/*"
+            --exclude "src/*"            \
+            --exclude "rollup.config.js" \
+            --exclude "package*.json"    \
+            --exclude "*.md"
+
+      # ────── purge CloudFront so new files show up ──────
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/*"
