@@ -13,7 +13,7 @@ jobs:
       BUILD_CMD: npm run build
 
       AWS_REGION: us-west-1
-      S3_BUCKET: sefa-ept
+      S3_BUCKET: 3d-sefa
       S3_PREFIX: ''
 
     steps:
