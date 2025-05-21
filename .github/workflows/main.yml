@@ -25,10 +25,14 @@ jobs:
       - name: Run build
         run: npm run build
 
-      - name: Copy Potree viewer into build
+      - name: Ensure Potree viewer is in build
         run: |
-          # adjust the source path if your viewer lives elsewhere
-          cp -R build/potree "$BUILD_DIR"/
+          if [ ! -f "$BUILD_DIR/potree/potree.js" ]; then
+            echo "→ potree viewer missing – copying"
+            cp -R potree "$BUILD_DIR"/
+          else
+            echo "✓ potree viewer already present – nothing to copy"
+          fi
 
       # ───────────── AWS creds ─────────────
       - uses: aws-actions/configure-aws-credentials@v4
