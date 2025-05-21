@@ -25,53 +25,11 @@ jobs:
       - name: Run build
         run: npm run build
 
-      - name: Ensure Potree viewer is in build
-        run: |
-          if [ ! -f "$BUILD_DIR/potree/potree.js" ]; then
-            echo "→ potree viewer missing – copying"
-            cp -R potree "$BUILD_DIR"/
-          else
-            echo "✓ potree viewer already present – nothing to copy"
-          fi
+      - name: Upload site
+        run: aws s3 sync build/ "s3://${{ env.S3_BUCKET }}" --delete --no-progress
 
-      # ───────────── AWS creds ─────────────
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
-
-      # ───────────── uploads ─────────────
-      - name: Upload build artefacts
-        run: aws s3 sync "$BUILD_DIR" "s3://$S3_BUCKET" --delete --no-progress
-
-      - name: Upload libs
-        run: |
-          if [ -d libs ]; then
-            aws s3 sync libs "s3://$S3_BUCKET/libs" --delete --no-progress
-          fi
-
-      - name: Upload models
-        run: |
-          if [ -d models ]; then
-            aws s3 sync models "s3://$S3_BUCKET/models" --delete --no-progress
-          fi
-
-      - name: Upload resources (shaders, textures, etc.)
-        run: |
-          if [ -d resources ]; then
-            aws s3 sync resources "s3://$S3_BUCKET/resources" --delete --no-progress
-          fi
-
-      - name: Upload thumbnails
-        run: |
-          if [ -d thumbnails ]; then
-            aws s3 sync thumbnails "s3://$S3_BUCKET/thumbnails" --delete --no-progress
-          fi
-
-      # ───────────── CloudFront ─────────────
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "$DISTRIBUTION_ID" \
+            --distribution-id ${{ env.DISTRIBUTION_ID }} \
             --paths "/*"
