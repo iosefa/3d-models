@@ -17,6 +17,14 @@ jobs:
       # ────── get code ──────
       - uses: actions/checkout@v4
 
+      # ────── build Potree ──────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: |
+          npm ci
+          npm run build
+
       # ────── AWS creds ──────
       - uses: aws-actions/configure-aws-credentials@v4
         with:
