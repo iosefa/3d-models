@@ -7,7 +7,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	<title>Potini Tia</title>
 
-	<link rel="stylesheet" type="text/css" href="../build/potree/potree.css">
+       <!-- Use CDN build of Potree so we don't rely on a local build directory -->
+       <!-- Load Potree assets from jsDelivr npm CDN -->
+       <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/potree@1.8/build/potree/potree.css">
 	<link rel="stylesheet" type="text/css" href="../libs/jquery-ui/jquery-ui.min.css">
 	<link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
 	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css">
@@ -26,11 +28,12 @@
 	<script src="../libs/i18next/i18next.js"></script>
 	<script src="../libs/jstree/jstree.js"></script>
 	<script src="../libs/copc/index.js"></script>
-	<script src="../build/potree/potree.js"></script>
+       <!-- CDN script for Potree viewer -->
+       <script src="https://cdn.jsdelivr.net/npm/potree@1.8/build/potree/potree.js"></script>
 	<script src="../libs/plasio/js/laslaz.js"></script>
 
 	<div class="potree_container" style="position: absolute; width: 100%; height: 100%; left: 0px; top: 0px; ">
-		<div id="potree_render_area" style="background-image: url('../build/potree/resources/images/background.jpg');"></div>
+               <div id="potree_render_area" style="background-image: url('../resources/images/background.jpg');"></div>
 		<div id="potree_sidebar_container"> </div>
 	</div>
 
