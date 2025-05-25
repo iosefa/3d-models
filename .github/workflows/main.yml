@@ -24,6 +24,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
+      # ────── build Potree ──────
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Potree
+        run: npm run build
+
       # ────── upload everything you actually serve ──────
       - name: Sync repo → S3 bucket root
         run: |
