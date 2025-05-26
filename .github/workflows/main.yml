@@ -1,64 +1,50 @@
-name: Deploy Potree
+name: Deploy Potree (use pre-built bundle)
 
 on:
   push:
     branches: [ main ]
 
 env:
-  AWS_REGION: us-west-1
-  S3_BUCKET: 3d-sefa
+  AWS_REGION:      us-west-1
+  S3_BUCKET:       3d-sefa
   DISTRIBUTION_ID: E2XWTFZCKFMWL3
+  POTREE_VERSION:  1.8.0
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # ─────────── pull repo ───────────
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          clean: false
+        with: { persist-credentials: false, clean: false }
 
-      # ─────────── build Potree bundle ───────────
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Install deps & build
+      # ─── grab the bundle (≈1 MB) ───
+      - name: Download Potree dist
         run: |
-          npm ci
-          npm run build 
+          curl -L -o potree.zip \
+            "https://github.com/potree/potree/releases/download/v${POTREE_VERSION}/potree-${POTREE_VERSION}-web.zip"
+          unzip -q potree.zip -d potree-dist
+          ls -lh potree-dist/build/potree/potree.js
 
-      # ─────────── stage static site ───────────
-      - name: Prepare site folder
+      # ─── stage site ───
+      - name: Prepare site
         run: |
           set -euo pipefail
-          rm -rf site
-          mkdir -p site
-          # copy only what the viewer—or index.html—actually requests
-          cp -r build/potree            site/build
-          cp -r libs                    site/
-          cp -r models resources        site/
-          cp -r thumbnails              site/ || true
-          cp    index.html              site/
-          echo "------ staged files ----------"
-          ls -lh site/build/potree/potree.js site/build/potree/potree.css
-          echo "--------------------------------"
+          rm -rf site && mkdir -p site/build
+          cp -r potree-dist/build/potree  site/build
+          cp -r libs models resources thumbnails site/ || true
+          cp index.html                   site/
 
-      # ─────────── AWS credentials ───────────
+      # ─── AWS creds & upload ───
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
-      # ─────────── upload + invalidate ───────────
-      - name: Sync site → S3 bucket root
-        run: |
-          aws s3 sync site "s3://${S3_BUCKET}" --delete --no-progress
+      - name: Sync site → S3
+        run: aws s3 sync site "s3://${S3_BUCKET}" --delete --no-progress
 
       - name: Invalidate CloudFront
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "$DISTRIBUTION_ID" \
-            --paths "/*"
+        run: aws cloudfront create-invalidation \
+          --distribution-id "$DISTRIBUTION_ID" --paths "/*"
