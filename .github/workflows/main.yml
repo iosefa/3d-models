@@ -1,4 +1,4 @@
-name: Deploy Potree (use pre-built bundle)
+name: Deploy Potree (pre-built bundle)
 
 on:
   push:
@@ -8,41 +8,51 @@ env:
   AWS_REGION:      us-west-1
   S3_BUCKET:       3d-sefa
   DISTRIBUTION_ID: E2XWTFZCKFMWL3
-  POTREE_VERSION:  1.8.0
+  POTREE_VERSION:  1.8.2          # bump when you upgrade Potree
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # ────── pull repo ──────
       - uses: actions/checkout@v4
-        with: { persist-credentials: false, clean: false }
+        with:
+          persist-credentials: false
+          clean: false
 
-      # ─── grab the bundle (≈1 MB) ───
+      # ────── download official Potree build ──────
       - name: Download Potree dist
         run: |
+          set -e
           curl -L -o potree.zip \
-            "https://github.com/potree/potree/releases/download/v${POTREE_VERSION}/potree-${POTREE_VERSION}-web.zip"
+            "https://github.com/potree/potree/releases/download/${POTREE_VERSION}/Potree_${POTREE_VERSION}.zip"
           unzip -q potree.zip -d potree-dist
+          # verify bundle exists
+          test -f potree-dist/build/potree/potree.js
           ls -lh potree-dist/build/potree/potree.js
 
-      # ─── stage site ───
-      - name: Prepare site
+      # ────── stage static site ──────
+      - name: Prepare site folder
         run: |
           set -euo pipefail
           rm -rf site && mkdir -p site/build
-          cp -r potree-dist/build/potree  site/build
+          cp -r potree-dist/build/potree  site/build        # ← ends up as build/potree/ in S3
           cp -r libs models resources thumbnails site/ || true
-          cp index.html                   site/
+          cp index.html site/
+          echo "------ staged files ----------"
+          ls -lh site/build/potree/potree.js site/build/potree/potree.css
+          echo "--------------------------------"
 
-      # ─── AWS creds & upload ───
+      # ────── AWS credentials ──────
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
-      - name: Sync site → S3
+      # ────── upload + invalidate ──────
+      - name: Sync site → bucket root
         run: aws s3 sync site "s3://${S3_BUCKET}" --delete --no-progress
 
       - name: Invalidate CloudFront
