@@ -27,7 +27,8 @@ jobs:
           set -e
           curl -L -o potree.zip \
             "https://github.com/potree/potree/releases/download/${POTREE_VERSION}/Potree_${POTREE_VERSION}.zip"
-          unzip -q potree.zip -d potree-dist
+          unzip -q potree.zip
+          mv Potree potree-dist
           # verify bundle exists
           test -f potree-dist/build/potree/potree.js
           ls -lh potree-dist/build/potree/potree.js
