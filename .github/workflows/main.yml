@@ -15,44 +15,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ────── pull repo ──────
+      # ─── pull code ───
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          clean: false
+        with: { persist-credentials: false, clean: false }
 
-      # ────── download official Potree build ──────
+      # ─── download & locate bundle ───
       - name: Download Potree dist
+        id: potree
         run: |
-          set -e
+          set -euo pipefail
           curl -L -o potree.zip \
             "https://github.com/potree/potree/releases/download/${POTREE_VERSION}/Potree_${POTREE_VERSION}.zip"
-          unzip -q potree.zip
-          mv Potree potree-dist
-          # verify bundle exists
-          test -f potree-dist/build/potree/potree.js
-          ls -lh potree-dist/build/potree/potree.js
+          
+          unzip -q potree.zip                     # → Potree_${POTREE_VERSION}/…
+          EXTRACT_DIR=$(echo Potree_*)            # shell-expand to folder name
+          echo "Extracted to $EXTRACT_DIR"
+          
+          # Path where potree.js lives
+          echo "bundle-path=$EXTRACT_DIR/build/potree" >> "$GITHUB_OUTPUT"
+          
+          # quick sanity check
+          test -f "$EXTRACT_DIR/build/potree/potree.js"
+          ls -lh "$EXTRACT_DIR/build/potree/potree.js"
 
-      # ────── stage static site ──────
+      # ─── stage static site ───
       - name: Prepare site folder
         run: |
           set -euo pipefail
           rm -rf site && mkdir -p site/build
-          cp -r potree-dist/build/potree  site/build        # ← ends up as build/potree/ in S3
+          cp -r "${{ steps.potree.outputs.bundle-path }}" site/build
           cp -r libs models resources thumbnails site/ || true
           cp index.html site/
           echo "------ staged files ----------"
           ls -lh site/build/potree/potree.js site/build/potree/potree.css
           echo "--------------------------------"
 
-      # ────── AWS credentials ──────
+      # ─── AWS credentials ───
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
-      # ────── upload + invalidate ──────
+      # ─── upload + invalidate ───
       - name: Sync site → bucket root
         run: aws s3 sync site "s3://${S3_BUCKET}" --delete --no-progress
 
